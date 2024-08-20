@@ -9,12 +9,14 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
+  id             String        @id @default(cuid())
+  email          String        @unique
   name           String
   hashedPassword String?
   picture        String?
-  Session        Session[]
+  sessions       Session[]
+  documents      Document[]
+  UsersShared    UsersShared[]
 }
 
 model Session {
@@ -22,4 +24,32 @@ model Session {
   userId    String
   expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Document {
+  id           String        @id @default(cuid())
+  name         String
+  content      Json
+  shared       Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  lastModified DateTime      @updatedAt
+  userId       String
+  owner        User          @relation(fields: [userId], references: [id])
+  usersShared  UsersShared[]
+
+  @@index([userId])
+}
+
+model UsersShared {
+  id         String   @id @default(cuid())
+  userId     String
+  documentId String
+  Document   Document @relation(fields: [documentId], references: [id])
+  User       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, documentId]) // each user-document pair is unique
+  @@index([userId])
+  @@index([documentId])
 }

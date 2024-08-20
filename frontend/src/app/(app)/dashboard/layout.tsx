@@ -14,9 +14,9 @@ export default async function AuthLayout({
   }
 
   return (
-    <>
+    <section className="mb-12">
       <NavBar />
       {children}
-    </>
+    </section>
   );
 }

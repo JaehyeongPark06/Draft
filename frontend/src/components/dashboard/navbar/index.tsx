@@ -1,13 +1,19 @@
 import Link from "next/link";
-import UserNav from "./UserNavServer";
+import UserNav from "./UserNav";
+import { getUser } from "@/lib/lucia";
 
-export default function NavBar() {
+export default async function NavBar() {
+  const user = await getUser();
+
+  if (!user) {
+    return null;
+  }
   return (
     <nav className="flex flex-row items-center justify-between py-4">
-      <Link href="/dashboard" className="text-xl font-semibold">
+      <Link href="/dashboard" className="text-xl font-bold">
         Draft
       </Link>
-      <UserNav />
+      <UserNav user={user} />
     </nav>
   );
 }

@@ -19,7 +19,7 @@ export default async function Landing() {
       <Button variant="default">
         {user ? (
           <Link className="text-sm sm:text-base font-medium" href="/dashboard">
-            Go to app
+            Dashboard
           </Link>
         ) : (
           <Link className="text-sm sm:text-base font-medium" href="/sign-in">

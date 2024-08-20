@@ -13,17 +13,30 @@ import { Search } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { useRouter } from "next/navigation";
 
-export default function Filters() {
+interface FiltersProps {
+  setSearchTerm: (term: string) => void;
+  isAlphabeticalSort: boolean;
+  setIsAlphabeticalSort: (isAlphabetical: boolean) => void;
+  setOwnerFilter: (filter: "me" | "anyone" | "not-me") => void;
+}
+
+export default function Filters({
+  setSearchTerm,
+  isAlphabeticalSort,
+  setIsAlphabeticalSort,
+  setOwnerFilter,
+}: FiltersProps) {
   const router = useRouter();
 
   return (
-    <section className="w-full flex flex-col xl:flex-row gap-4">
+    <section className="w-full flex flex-col xl:flex-row gap-4 xl:items-center">
       <div className="relative h-9 flex w-full xl:w-1/2 2xl:w-5/12 items-center justify-center">
         <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
         <Input
           onChange={(e) => {
+            setSearchTerm(e.target.value);
             if (e.target.value === "") {
-              router.push(`/dashboard`);
+              router.push("/dashboard");
               return;
             }
             router.push(`/dashboard?q=${e.target.value}`);
@@ -33,7 +46,12 @@ export default function Filters() {
         />
       </div>
       <div className="flex flex-row justify-start items-center gap-2">
-        <Select defaultValue="me">
+        <Select
+          defaultValue="me"
+          onValueChange={(value: "me" | "anyone" | "not-me") =>
+            setOwnerFilter(value)
+          }
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue />
           </SelectTrigger>
@@ -45,7 +63,11 @@ export default function Filters() {
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Toggle aria-label="Toggle alphabetical order">
+        <Toggle
+          aria-label="Toggle alphabetical order"
+          pressed={isAlphabeticalSort}
+          onPressedChange={setIsAlphabeticalSort}
+        >
           <ArrowDownAZ className="h-4 w-4" />
         </Toggle>
       </div>

@@ -54,7 +54,7 @@ export default function SignUpForm() {
     const res = await SignUp(values);
     if (res.success) {
       router.push("/dashboard");
-      toast.success("Account created successfully");
+      toast.success("Account created successfully.");
     } else {
       toast.error(res.error);
     }
@@ -103,9 +103,9 @@ export default function SignUpForm() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -121,9 +121,9 @@ export default function SignUpForm() {
               <FormField
                 control={form.control}
                 name="name"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Name</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -139,9 +139,9 @@ export default function SignUpForm() {
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -162,9 +162,9 @@ export default function SignUpForm() {
               <FormField
                 control={form.control}
                 name="confirmPassword"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Confirm Password</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input
                         {...field}

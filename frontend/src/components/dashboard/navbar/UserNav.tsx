@@ -15,15 +15,15 @@ import { Button } from "@/components/ui/button";
 import { SignOut } from "@/app/(auth)/auth.action";
 import { useRouter } from "next/navigation";
 
-interface UserNavClientProps {
+type UserNavProps = {
   user: {
     name: string;
     email: string;
     picture: string | null;
   };
-}
+};
 
-export default function UserNavClient({ user }: UserNavClientProps) {
+export default function UserNav({ user }: UserNavProps) {
   const router = useRouter();
 
   return (

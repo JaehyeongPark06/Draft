@@ -77,6 +77,7 @@ export const SignIn = async (values: z.infer<typeof SignInSchema>) => {
     sessionCookie.value,
     sessionCookie.attributes
   );
+
   return { success: true };
 };
 
@@ -88,6 +89,7 @@ export const SignOut = async () => {
     sessionCookie.value,
     sessionCookie.attributes
   );
+
   return redirect("/sign-in");
 };
 

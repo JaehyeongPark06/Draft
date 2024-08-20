@@ -38,7 +38,7 @@ export default function SignInForm() {
     const res = await SignIn(values);
     if (res.success) {
       router.push("/dashboard");
-      toast.success("Signed in successfully");
+      toast.success("Signed in successfully.");
     } else {
       toast.error(res.error);
     }
@@ -87,9 +87,9 @@ export default function SignInForm() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -105,9 +105,9 @@ export default function SignInForm() {
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel htmlFor={field.id}>Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
