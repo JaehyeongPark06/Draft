@@ -22,7 +22,7 @@ export const signUp = async (values: z.infer<typeof SignUpSchema>) => {
     });
 
     if (existingUser) {
-      return { error: "User already exists", success: false };
+      return { error: "User already exists.", success: false };
     }
 
     const hashedPassword = await new Argon2id().hash(values.password);
@@ -45,7 +45,7 @@ export const signUp = async (values: z.infer<typeof SignUpSchema>) => {
     );
     return { success: true };
   } catch (error) {
-    return { error: "Something went wrong", success: false };
+    return { error: "Something went wrong.", success: false };
   }
 };
 
@@ -57,7 +57,7 @@ export const signIn = async (values: z.infer<typeof SignInSchema>) => {
   });
 
   if (!user || !user.hashedPassword) {
-    return { error: "Invalid email or password", success: false };
+    return { error: "Invalid email or password.", success: false };
   }
 
   const passwordMatch = await new Argon2id().verify(
@@ -66,7 +66,7 @@ export const signIn = async (values: z.infer<typeof SignInSchema>) => {
   );
 
   if (!passwordMatch) {
-    return { error: "Invalid email or password", success: false };
+    return { error: "Invalid email or password.", success: false };
   }
 
   const session = await lucia.createSession(user.id, {});
@@ -118,6 +118,6 @@ export const getGoogleOauthConsentUrl = async () => {
 
     return { success: true, url: authUrl.toString() };
   } catch (error) {
-    return { success: false, error: "Something went wrong" };
+    return { success: false, error: "Something went wrong." };
   }
 };
