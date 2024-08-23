@@ -28,13 +28,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  clearDocuments,
+  deleteAccount,
+  updateName,
+} from "@/lib/actions/settings";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoaderCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -59,16 +63,28 @@ interface ConfirmationDialogProps {
   buttonText: string;
   description: string;
   onConfirm: () => void;
+  isLoading: boolean;
 }
 
 const ConfirmationDialog = ({
   buttonText,
   description,
   onConfirm,
+  isLoading,
 }: ConfirmationDialogProps) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <Button variant="destructive">{buttonText}</Button>
+      <Button
+        className="flex flex-row justify-center items-center"
+        variant="destructive"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <LoaderCircle className="w-5 h-5 animate-spin" />
+        ) : (
+          buttonText
+        )}
+      </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>
       <AlertDialogHeader>
@@ -101,6 +117,7 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
@@ -111,7 +128,6 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
   const currentTheme = useTheme().theme;
 
   async function onSubmit(data: z.infer<typeof accountFormSchema>) {
-    // check if there are any changes that need to query the server
     if (data.name === initialData.name && data.appearance === currentTheme) {
       toast.info("No changes detected.");
       return;
@@ -120,16 +136,7 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
     setIsSubmitting(true);
 
     try {
-      await fetch("/api/settings/name", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          newName: data.name,
-        }),
-      });
-
+      await updateName(data.name);
       setTheme(data.appearance);
       router.refresh();
       toast.success("Account updated.");
@@ -140,28 +147,32 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
     }
   }
 
-  async function deleteAccount() {
+  async function handleClearDocuments() {
+    setIsClearing(true);
+
+    try {
+      const result = await clearDocuments();
+
+      if (result.success) {
+        toast.success("Documents cleared successfully.");
+      } else {
+        toast.info("No documents to delete.");
+      }
+    } catch (error) {
+      console.error("Error clearing documents:", error);
+      toast.error("Failed to clear documents.");
+    } finally {
+      setIsClearing(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
     setIsDeleting(true);
 
     try {
-      const response = await fetch("/api/settings/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: initialData.userId,
-        }),
-      });
-      const data = await response.json();
-
-      if (data.error) {
-        console.error("Error deleting account:", data.error);
-        toast.error("Failed to delete account.");
-      } else {
-        toast.success("Account deleted successfully.");
-        router.push("/");
-      }
+      await deleteAccount();
+      toast.success("Account deleted successfully.");
+      router.push("/sign-up");
     } catch (error) {
       console.error("Error deleting account:", error);
       toast.error("Failed to delete account.");
@@ -169,58 +180,6 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
       setIsDeleting(false);
     }
   }
-
-  async function clearDocuments() {
-    // check if user owns any documents
-    const response = await fetch("/api/settings/count-docs", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-      console.error("Error clearing documents:", data.error);
-      toast.error("Failed to clear documents.");
-      return;
-    }
-
-    if (data.count === 0) {
-      toast.info("No documents to delete.");
-      return;
-    }
-
-    setIsDeleting(true);
-
-    try {
-      const response = await fetch("/api/settings/clear", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: initialData.userId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        console.error("Error clearing documents:", data.error);
-        toast.error("Failed to clear documents.");
-      } else {
-        toast.success("Documents cleared successfully.");
-      }
-    } catch (error) {
-      console.error("Error clearing documents:", error);
-      toast.error("Failed to clear documents.");
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -284,12 +243,14 @@ export function ClientSettingsForm({ initialData }: ClientSettingsFormProps) {
           <ConfirmationDialog
             buttonText="Clear Documents"
             description="This will permanently delete all your documents from the server."
-            onConfirm={clearDocuments}
+            onConfirm={handleClearDocuments}
+            isLoading={isClearing}
           />
           <ConfirmationDialog
             buttonText="Delete Account"
-            description="This will permanently delete your account from the server."
-            onConfirm={deleteAccount}
+            description="This will permanently delete your account and all owned documents from the server."
+            onConfirm={handleDeleteAccount}
+            isLoading={isDeleting}
           />
         </div>
       </form>

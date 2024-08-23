@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-export const SignUp = async (values: z.infer<typeof SignUpSchema>) => {
+export const signUp = async (values: z.infer<typeof SignUpSchema>) => {
   try {
     // if user already exists, throw error
     const existingUser = await prisma.user.findUnique({
@@ -49,7 +49,7 @@ export const SignUp = async (values: z.infer<typeof SignUpSchema>) => {
   }
 };
 
-export const SignIn = async (values: z.infer<typeof SignInSchema>) => {
+export const signIn = async (values: z.infer<typeof SignInSchema>) => {
   const user = await prisma.user.findUnique({
     where: {
       email: values.email,

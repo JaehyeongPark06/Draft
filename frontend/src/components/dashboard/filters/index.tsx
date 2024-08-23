@@ -6,41 +6,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { ArrowDownAZ } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
-import { useRouter } from "next/navigation";
 
 interface FiltersProps {
-  setSearchTerm: (term: string) => void;
   isAlphabeticalSort: boolean;
   setIsAlphabeticalSort: (isAlphabetical: boolean) => void;
   setOwnerFilter: (filter: "me" | "anyone" | "not-me") => void;
 }
 
 export default function Filters({
-  setSearchTerm,
   isAlphabeticalSort,
   setIsAlphabeticalSort,
   setOwnerFilter,
 }: FiltersProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.push(`/dashboard?${params.toString()}`);
+  };
 
   return (
     <section className="w-full flex flex-col xl:flex-row gap-4 xl:items-center">
       <div className="relative h-9 flex w-full xl:w-1/2 2xl:w-5/12 items-center justify-center">
         <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
         <Input
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            if (e.target.value === "") {
-              router.push("/dashboard");
-              return;
-            }
-            router.push(`/dashboard?q=${e.target.value}`);
-          }}
+          defaultValue={searchParams.get("q") || ""}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search documents..."
           className="pl-10"
         />

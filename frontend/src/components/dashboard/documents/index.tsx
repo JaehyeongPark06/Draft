@@ -5,7 +5,9 @@ import {
 } from "./Placeholders";
 
 import Document from "../document";
+import { LoaderCircle } from "lucide-react";
 import { Plus } from "lucide-react";
+import { useState } from "react";
 
 interface DocumentType {
   id: string;
@@ -13,58 +15,36 @@ interface DocumentType {
   shared: boolean;
   lastModified: string;
   ownedBy: string;
+  isOwner: boolean;
 }
 
 interface DocumentsProps {
   documents: DocumentType[];
   removeDocument: (id: string) => Promise<void>;
   renameDocument: (id: string, newName: string) => Promise<void>;
+  shareDocument: (id: string, email: string) => Promise<void>;
   searchTerm: string;
   ownerFilter: "me" | "anyone" | "not-me";
   refreshDocuments: () => Promise<void>;
+  onCreate: () => Promise<void>;
 }
 
 export default function Documents({
   documents,
   removeDocument,
   renameDocument,
+  shareDocument,
   searchTerm,
   ownerFilter,
   refreshDocuments,
+  onCreate,
 }: DocumentsProps) {
-  async function createDocument() {
-    try {
-      const newDocument = {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "" }],
-          },
-        ],
-      };
+  const [isCreating, setIsCreating] = useState(false);
 
-      const response = await fetch("/api/documents/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: "Untitled Document",
-          content: newDocument,
-        }),
-      });
-
-      if (response.ok) {
-        // refresh to show the new document
-        await refreshDocuments();
-      } else {
-        const errorData = await response.json();
-        console.error("Failed to create document:", errorData.error);
-      }
-    } catch (error) {
-      console.error("Failed to create document:", error);
-    }
+  async function handleCreate() {
+    setIsCreating(true);
+    await onCreate();
+    setIsCreating(false);
   }
 
   if (documents.length === 0) {
@@ -73,7 +53,7 @@ export default function Documents({
     } else if (ownerFilter === "not-me") {
       return <SharedPlaceholder />;
     } else {
-      return <EmptyPlaceholder onCreate={createDocument} />;
+      return <EmptyPlaceholder onCreate={handleCreate} />;
     }
   }
 
@@ -82,9 +62,13 @@ export default function Documents({
       {ownerFilter !== "not-me" && (
         <div
           className="flex justify-center items-center p-4 border border-dashed rounded-md cursor-pointer hover:bg-accent transition-all"
-          onClick={createDocument}
+          onClick={handleCreate}
         >
-          <Plus />
+          {isCreating ? (
+            <LoaderCircle className="w-6 h-6 animate-spin" />
+          ) : (
+            <Plus className="w-6 h-6" />
+          )}
         </div>
       )}
       {documents.map((document) => (
@@ -95,8 +79,10 @@ export default function Documents({
           shared={document.shared}
           lastModified={document.lastModified}
           ownedBy={document.ownedBy}
+          isOwner={document.isOwner}
           removeDocument={removeDocument}
           renameDocument={renameDocument}
+          shareDocument={shareDocument}
         />
       ))}
     </section>

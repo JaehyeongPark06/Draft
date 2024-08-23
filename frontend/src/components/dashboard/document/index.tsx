@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -19,6 +18,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { EllipsisVertical, FilePen, Share, Trash2 } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
@@ -26,13 +34,32 @@ import {
 } from "@/components/ui/popover";
 
 import { Button } from "@/components/ui/button";
-import { EllipsisVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { LoaderCircle } from "lucide-react";
 import { Users } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const shareSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+});
+
+const renameSchema = z.object({
+  // no whitespace in beginning
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: "Document name cannot be empty" })
+    .regex(/^[^\s].*$/, {
+      message: "Document name cannot start with whitespace",
+    }),
+});
+
+type ShareFormValues = z.infer<typeof shareSchema>;
+type RenameFormValues = z.infer<typeof renameSchema>;
 
 interface DocumentProps {
   id: string;
@@ -40,8 +67,10 @@ interface DocumentProps {
   shared: boolean;
   lastModified: string;
   ownedBy: string;
+  isOwner: boolean;
   removeDocument: (id: string) => Promise<void>;
   renameDocument: (id: string, newName: string) => Promise<void>;
+  shareDocument: (id: string, email: string) => Promise<void>;
 }
 
 export default function Document({
@@ -50,13 +79,29 @@ export default function Document({
   shared,
   lastModified,
   ownedBy,
+  isOwner,
   removeDocument,
   renameDocument,
+  shareDocument,
 }: DocumentProps) {
   const [isRenaming, setIsRenaming] = useState(false);
-  const [newName, setNewName] = useState(name);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
-  // trim if name is too long
+  const shareForm = useForm<ShareFormValues>({
+    resolver: zodResolver(shareSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const renameForm = useForm<RenameFormValues>({
+    resolver: zodResolver(renameSchema),
+    defaultValues: {
+      name: name,
+    },
+  });
+
   function trimName(name: string) {
     if (name.length > 20) {
       return name.slice(0, 20) + "...";
@@ -64,16 +109,35 @@ export default function Document({
     return name;
   }
 
-  const handleRename = async () => {
+  async function handleRemove() {
+    setIsRemoving(true);
+    try {
+      await removeDocument(id);
+    } finally {
+      setIsRemoving(false);
+    }
+  }
+
+  async function handleRename(values: RenameFormValues) {
     setIsRenaming(true);
     try {
-      await renameDocument(id, newName);
+      await renameDocument(id, values.name);
+      renameForm.reset({ name: values.name });
     } finally {
       setIsRenaming(false);
     }
-  };
+  }
 
-  // format the date for display
+  async function handleShare(values: ShareFormValues) {
+    setIsSharing(true);
+    try {
+      await shareDocument(id, values.email);
+      shareForm.reset();
+    } finally {
+      setIsSharing(false);
+    }
+  }
+
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -84,12 +148,7 @@ export default function Document({
   };
 
   return (
-    <div
-      className="rounded-md p-4 flex flex-row gap-2 justify-between border border-dashed hover:bg-accent transition-all select-none cursor-pointer"
-      onClick={(e) => {
-        console.log("Document clicked");
-      }}
-    >
+    <div className="rounded-md p-4 flex flex-row gap-2 justify-between border border-dashed hover:bg-accent transition-all select-none cursor-pointer">
       <div className="flex flex-col gap-1">
         <h4 className="text-base font-medium flex flex-row items-center gap-2">
           {trimName(name)} {shared && <Users className="w-4 h-4" />}
@@ -97,65 +156,136 @@ export default function Document({
         <p className="text-xs text-muted-foreground">
           Last modified: {formatDate(lastModified)}
         </p>
-        <p className="text-xs text-muted-foreground">Owned by: {ownedBy}</p>
+        <p className="text-xs text-muted-foreground">
+          {isOwner ? "Owned by: me" : `Owned by: ${ownedBy}`}
+        </p>
       </div>
       <Popover>
-        <PopoverTrigger
-          asChild
-          className="cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
+        <PopoverTrigger asChild className="cursor-pointer">
           <EllipsisVertical className="w-5 h-5" />
         </PopoverTrigger>
-        <PopoverContent
-          className="w-52"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
+        <PopoverContent className="w-52">
           <div className="flex flex-col gap-3">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="secondary">Rename</Button>
+                <Button variant="default" size="sm">
+                  {isRenaming ? (
+                    <LoaderCircle className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <FilePen className="w-4 h-4 mr-2" />
+                      Rename
+                    </>
+                  )}
+                </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Rename</DialogTitle>
-                  <DialogDescription className="flex flex-row justify-center items-center gap-4 py-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input
-                      id="name"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                    />
+                  <DialogTitle>Rename Document</DialogTitle>
+                  <DialogDescription>
+                    Enter a new name for your document.
                   </DialogDescription>
                 </DialogHeader>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button
-                      type="submit"
-                      onClick={handleRename}
-                      disabled={isRenaming}
-                    >
-                      {isRenaming ? (
-                        <LoaderCircle className="w-5 h-5 animate-spin" />
-                      ) : (
-                        "Save changes"
+                <Form {...renameForm}>
+                  <form
+                    onSubmit={renameForm.handleSubmit(handleRename)}
+                    className="space-y-8"
+                  >
+                    <FormField
+                      control={renameForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </Button>
-                  </DialogClose>
-                </DialogFooter>
+                    />
+                    <DialogFooter>
+                      <Button type="submit" disabled={isRenaming}>
+                        {isRenaming ? (
+                          <LoaderCircle className="w-5 h-5 animate-spin" />
+                        ) : (
+                          "Save changes"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
               </DialogContent>
             </Dialog>
-            {ownedBy === "me" && (
+            {isOwner && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm">
+                    {isSharing ? (
+                      <LoaderCircle className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Share className="w-4 h-4 mr-2" />
+                        Share
+                      </>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Share Document</DialogTitle>
+                    <DialogDescription>
+                      Enter the email of the user you want to share this
+                      document with.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...shareForm}>
+                    <form
+                      onSubmit={shareForm.handleSubmit(handleShare)}
+                      className="space-y-8"
+                    >
+                      <FormField
+                        control={shareForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="user@example.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter>
+                        <Button type="submit" disabled={isSharing}>
+                          {isSharing ? (
+                            <LoaderCircle className="w-5 h-5 animate-spin" />
+                          ) : (
+                            "Share"
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
+            {isOwner && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
-                    Remove
+                    {isRemoving ? (
+                      <LoaderCircle className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </>
+                    )}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -169,10 +299,17 @@ export default function Document({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => removeDocument(id)}
-                      className={buttonVariants({ variant: "destructive" })}
+                      onClick={handleRemove}
+                      className={
+                        buttonVariants({ variant: "destructive" }) +
+                        " flex justify-center items-center"
+                      }
                     >
-                      Continue
+                      {isRemoving ? (
+                        <LoaderCircle className="w-5 h-5 animate-spin" />
+                      ) : (
+                        "Continue"
+                      )}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

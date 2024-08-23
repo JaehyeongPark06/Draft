@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LogOut, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SignOut } from "@/app/(auth)/auth.action";
@@ -49,10 +50,19 @@ export default function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-            Settings
+          <DropdownMenuItem
+            className="flex flex-row items-center gap-2 justify-start"
+            onClick={() => router.push("/dashboard/settings")}
+          >
+            <Settings className="w-4 h-4 text-muted-foreground" /> Settings
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => SignOut()}>Log out</DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex flex-row items-center gap-2 justify-start"
+            onClick={() => SignOut()}
+          >
+            <LogOut className="w-4 h-4 text-muted-foreground" />
+            Log out
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

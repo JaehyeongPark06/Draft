@@ -1,5 +1,5 @@
 import Link from "next/link";
-import UserNav from "./UserNav";
+import UserNav from "./UserNavClient";
 import { getUser } from "@/lib/lucia";
 
 export default async function NavBar() {

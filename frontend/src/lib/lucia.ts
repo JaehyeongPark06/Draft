@@ -7,7 +7,7 @@ import { prisma } from "./prisma";
 const adapter = new PrismaAdapter(prisma.session, prisma.user);
 
 export const lucia = new Lucia(adapter, {
-  sessionExpiresIn: new TimeSpan(2, "w"), // expires in 2 weeks
+  sessionExpiresIn: new TimeSpan(2, "w"),
   sessionCookie: {
     name: "auth-cookie",
     expires: true,
@@ -26,7 +26,6 @@ export const getUser = async () => {
 
   try {
     if (session && session.fresh) {
-      // refreshing session cookie
       const sessionCookie = await lucia.createSessionCookie(session.id);
       cookies().set(
         sessionCookie.name,
@@ -46,9 +45,12 @@ export const getUser = async () => {
     // do nothing
   }
 
+  // if user deletes their account
+  if (!user || !user.id) return null;
+
   const dbUser = await prisma.user.findUnique({
     where: {
-      id: user?.id,
+      id: user.id,
     },
     select: {
       id: true,

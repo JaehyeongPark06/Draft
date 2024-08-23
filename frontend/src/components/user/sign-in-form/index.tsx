@@ -8,7 +8,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { SignIn, getGoogleOauthConsentUrl } from "@/app/(auth)/auth.action";
+import { getGoogleOauthConsentUrl, signIn } from "@/app/(auth)/auth.action";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ export default function SignInForm() {
   });
 
   async function onSubmit(values: z.infer<typeof SignInSchema>) {
-    const res = await SignIn(values);
+    const res = await signIn(values);
     if (res.success) {
       router.push("/dashboard");
       toast.success("Signed in successfully.");

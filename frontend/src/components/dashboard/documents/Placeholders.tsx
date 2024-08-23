@@ -1,12 +1,22 @@
 import { FileText, Search, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { LoaderCircle } from "lucide-react";
+import { useState } from "react";
 
 export function EmptyPlaceholder({
   onCreate,
 }: {
   onCreate: () => Promise<void>;
 }) {
+  const [isCreating, setIsCreating] = useState(false);
+
+  async function handleCreate() {
+    setIsCreating(true);
+    await onCreate();
+    setIsCreating(false);
+  }
+
   return (
     <div className="flex h-[450px] shrink-0 items-center justify-center rounded-md border border-dashed">
       <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
@@ -15,8 +25,16 @@ export function EmptyPlaceholder({
         <p className="mb-4 mt-2 text-sm text-muted-foreground">
           You have not created any documents. Create one below.
         </p>
-        <Button size="sm" className="relative" onClick={onCreate}>
-          Create Document
+        <Button
+          className="flex justify-center items-center"
+          size="sm"
+          onClick={handleCreate}
+        >
+          {isCreating ? (
+            <LoaderCircle className="w-5 h-5 animate-spin" />
+          ) : (
+            "Create document"
+          )}
         </Button>
       </div>
     </div>

@@ -8,7 +8,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { SignUp, getGoogleOauthConsentUrl } from "@/app/(auth)/auth.action";
+import { getGoogleOauthConsentUrl, signUp } from "@/app/(auth)/auth.action";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ export default function SignUpForm() {
   });
 
   async function onSubmit(values: z.infer<typeof SignUpSchema>) {
-    const res = await SignUp(values);
+    const res = await signUp(values);
     if (res.success) {
       router.push("/dashboard");
       toast.success("Account created successfully.");
