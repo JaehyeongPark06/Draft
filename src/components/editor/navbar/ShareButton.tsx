@@ -75,7 +75,8 @@ export default function ShareButton({ documentId, isOwner }: ShareButtonProps) {
   };
 
   const handleRemoveSharedUser = async (email: string) => {
-    if (!isOwner) return; // Prevent removing if not owner
+    if (!isOwner) return; // prevent removing if not owner
+
     try {
       const updatedSharedUsers = await removeSharedUser(documentId, email);
       setSharedEmails(updatedSharedUsers);

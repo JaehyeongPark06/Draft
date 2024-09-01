@@ -14,7 +14,8 @@ export default async function Landing() {
       </h1>
       <h2 className="text-sm sm:text-base md:text-lg w-full font-normal mt-2 mb-6">
         A real time collaborative document editor built with Next.js 14 (app
-        router), Shadcn UI, Lucia auth, Tailwind, Zod, Supabase, and Prisma
+        router), Liveblocks, Shadcn UI, Lucia auth, Tailwind, Zod, Supabase,
+        UploadThing, and Prisma
       </h2>
       <Button variant="default">
         {user ? (
