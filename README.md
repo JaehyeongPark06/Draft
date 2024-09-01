@@ -6,7 +6,7 @@ A real time collaborative document editor with audio, image, video uploads/embed
 
 ### Frontend
 
-- [Next.js 14](https://nextjs.org/) (app router)
+- [Next.js 14 (app router)](https://nextjs.org/)
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Lucia auth](https://lucia-auth.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
@@ -16,7 +16,7 @@ A real time collaborative document editor with audio, image, video uploads/embed
 ### Backend
 
 - [Supabase](https://supabase.com/)
-- [UploadThing](https://uploadthing.com/)
+- [UploadThing (AWS S3 wrapper)](https://uploadthing.com/)
 - [Prisma](https://www.prisma.io/)
 
 ### Possible Improvements
