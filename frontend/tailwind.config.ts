@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { withUt } from "uploadthing/tw";
 
 const config = {
   darkMode: ["class"],
@@ -10,6 +11,37 @@ const config = {
   ],
   prefix: "",
   theme: {
+    typography: {
+      DEFAULT: {
+        css: {
+          maxWidth: "100%",
+          fontSize: "1rem",
+          h1: {
+            fontSize: "2.25rem",
+          },
+          h2: {
+            fontSize: "1.875rem",
+          },
+          h3: {
+            fontSize: "1.5rem",
+          },
+          p: {
+            fontSize: "1rem",
+          },
+        },
+      },
+      // Responsive typography
+      sm: {
+        css: {
+          fontSize: "0.875rem",
+        },
+      },
+      lg: {
+        css: {
+          fontSize: "1.125rem",
+        },
+      },
+    },
     container: {
       center: true,
       padding: "2rem",
@@ -81,7 +113,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;
 
-export default config;
+export default withUt(config);

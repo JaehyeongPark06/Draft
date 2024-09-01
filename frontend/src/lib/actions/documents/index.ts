@@ -1,31 +1,33 @@
 "use server";
 
+import { deleteFile } from "@/lib/uploadthing";
 import { getUser } from "@/lib/lucia";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function createDocument(name: string, content: string) {
+export async function createDocument(name: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
     const newDocument = await prisma.document.create({
       data: {
         userId: user.id,
-        name,
-        content,
+        name: name,
         shared: false,
       },
     });
 
-    revalidatePath("/documents");
+    revalidatePath("/dashboard");
     return newDocument;
   } catch (error) {
-    console.error("Error creating document:", error);
-    throw new Error("Failed to create document");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to create document.");
   }
 }
 
@@ -33,7 +35,7 @@ export async function deleteDocument(id: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
@@ -42,23 +44,33 @@ export async function deleteDocument(id: string) {
     });
 
     if (!document) {
-      throw new Error("Document not found");
+      throw new Error("Document not found.");
     }
 
     await prisma.$transaction(async (prisma) => {
       await prisma.usersShared.deleteMany({
         where: { documentId: id },
       });
+
+      // delete files from uploadthing related to this document
+      if (document.uploadedFiles && document.uploadedFiles.length > 0) {
+        for (const fileKey of document.uploadedFiles) {
+          await deleteFile(fileKey);
+        }
+      }
+
       await prisma.document.delete({
         where: { id },
       });
     });
 
     revalidatePath("/documents");
-    return { message: "Document deleted successfully" };
+    return { message: "Document deleted successfully." };
   } catch (error) {
-    console.error("Error deleting document:", error);
-    throw new Error("Failed to delete document");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to delete document.");
   }
 }
 
@@ -66,7 +78,7 @@ export async function getDocuments(filter: "me" | "not-me" | "anyone" = "me") {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
@@ -97,13 +109,15 @@ export async function getDocuments(filter: "me" | "not-me" | "anyone" = "me") {
         });
         break;
       default:
-        throw new Error("Invalid filter");
+        throw new Error("Invalid filter.");
     }
 
     return { currentUserEmail: user.email, documents };
   } catch (error) {
-    console.error("Error fetching documents:", error);
-    throw new Error("Failed to fetch documents");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch documents.");
   }
 }
 
@@ -111,7 +125,7 @@ export async function renameDocument(id: string, name: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
@@ -127,10 +141,9 @@ export async function renameDocument(id: string, name: string) {
     });
 
     if (!document) {
-      throw new Error("Document not found or access denied");
+      throw new Error("Document not found or access denied.");
     }
 
-    // check if document name even changed
     if (document.name === name) {
       return { updated: false, document };
     }
@@ -146,8 +159,10 @@ export async function renameDocument(id: string, name: string) {
     revalidatePath(`/documents/${id}`);
     return { updated: true, document: updatedDoc };
   } catch (error) {
-    console.error("Error renaming document:", error);
-    throw new Error("Failed to rename document");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to rename document.");
   }
 }
 
@@ -155,10 +170,19 @@ export async function shareDocument(id: string, email: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
+    // if no email, just fetch and return the current shared users
+    if (!email) {
+      const sharedUsers = await prisma.usersShared.findMany({
+        where: { documentId: id },
+        include: { User: true },
+      });
+      return sharedUsers.map((shared) => shared.User.email);
+    }
+
     const document = await prisma.document.findUnique({
       where: {
         id: id,
@@ -168,12 +192,12 @@ export async function shareDocument(id: string, email: string) {
 
     if (!document) {
       throw new Error(
-        "Document not found or you don't have permission to share it"
+        "Document not found or you don't have permission to share it."
       );
     }
 
     if (user.email === email) {
-      throw new Error("You cannot share a document with yourself");
+      throw new Error("You cannot share a document with yourself.");
     }
 
     const userToShare = await prisma.user.findUnique({
@@ -181,7 +205,7 @@ export async function shareDocument(id: string, email: string) {
     });
 
     if (!userToShare) {
-      throw new Error("User with this email does not exist");
+      throw new Error("User with this email does not exist.");
     }
 
     const existingShare = await prisma.usersShared.findUnique({
@@ -194,7 +218,7 @@ export async function shareDocument(id: string, email: string) {
     });
 
     if (existingShare) {
-      throw new Error("Document is already shared with this user");
+      throw new Error("Document is already shared with this user.");
     }
 
     await prisma.usersShared.create({
@@ -211,11 +235,77 @@ export async function shareDocument(id: string, email: string) {
       });
     }
 
-    revalidatePath(`/documents/${id}`);
-    return { message: "Document shared successfully" };
+    // return updated list of shared users
+    const sharedUsers = await prisma.usersShared.findMany({
+      where: { documentId: id },
+      include: { User: true },
+    });
+
+    return sharedUsers.map((shared) => shared.User.email);
   } catch (error) {
-    console.error("Error sharing document:", error);
-    throw new Error("Failed to share document");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to share the document.");
+  }
+}
+
+export async function removeSharedUser(documentId: string, email: string) {
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized.");
+  }
+
+  try {
+    const document = await prisma.document.findUnique({
+      where: {
+        id: documentId,
+        userId: user.id,
+      },
+    });
+
+    if (!document) {
+      throw new Error(
+        "Document not found or you don't have permission to modify it."
+      );
+    }
+
+    const userToRemove = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!userToRemove) {
+      throw new Error("User with this email does not exist.");
+    }
+
+    await prisma.usersShared.delete({
+      where: {
+        userId_documentId: {
+          userId: userToRemove.id,
+          documentId: documentId,
+        },
+      },
+    });
+
+    const remainingSharedUsers = await prisma.usersShared.findMany({
+      where: { documentId: documentId },
+      include: { User: true },
+    });
+
+    if (remainingSharedUsers.length === 0) {
+      await prisma.document.update({
+        where: { id: documentId },
+        data: { shared: false },
+      });
+    }
+
+    return remainingSharedUsers.map((shared) => shared.User.email);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to remove shared user.");
   }
 }
 
@@ -223,7 +313,7 @@ export async function getDocumentCount() {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
@@ -235,11 +325,13 @@ export async function getDocumentCount() {
 
     return {
       count,
-      message: count === 0 ? "No documents found" : "Documents found",
+      message: count === 0 ? "No documents found." : "Documents found.",
     };
   } catch (error) {
-    console.error("Error fetching document count:", error);
-    throw new Error("Failed to fetch document count");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to fetch document count.");
   }
 }
 
@@ -247,7 +339,7 @@ export async function clearAllDocuments() {
   const user = await getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Unauthorized.");
   }
 
   try {
@@ -260,7 +352,137 @@ export async function clearAllDocuments() {
     revalidatePath("/documents");
     return { success: true };
   } catch (error) {
-    console.error("Error clearing documents:", error);
-    throw new Error("Failed to delete documents");
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to delete documents.");
+  }
+}
+
+export async function updateDocument(
+  id: string,
+  data: { uploadedFiles?: string[] }
+) {
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized.");
+  }
+
+  try {
+    const updatedDocument = await prisma.document.update({
+      where: {
+        id: id,
+        OR: [
+          { userId: user.id },
+          { usersShared: { some: { userId: user.id } } },
+        ],
+      },
+      data: {
+        lastModified: new Date(),
+        uploadedFiles: data.uploadedFiles
+          ? { push: data.uploadedFiles }
+          : undefined,
+      },
+    });
+
+    return updatedDocument;
+  } catch (error) {
+    console.error("Error updating document:", error);
+    throw new Error("Failed to update document.");
+  }
+}
+
+export async function getDocumentInfo(id: string) {
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized.");
+  }
+
+  try {
+    const document = await prisma.document.findFirst({
+      where: {
+        id,
+        OR: [
+          { userId: user.id },
+          { shared: true },
+          { usersShared: { some: { userId: user.id } } },
+        ],
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        usersShared: {
+          select: {
+            userId: true,
+            User: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new Error("Document not found or access denied.");
+    }
+
+    return { ...document };
+  } catch (error) {
+    console.error("Error fetching document:", error);
+    throw new Error("Failed to fetch document.");
+  }
+}
+
+export async function getUserInfo() {
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized.");
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+  };
+}
+
+export async function updateDocumentTitle(id: string, title: string) {
+  const user = await getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized.");
+  }
+
+  try {
+    const updatedDocument = await prisma.document.update({
+      where: {
+        id: id,
+        OR: [
+          { userId: user.id },
+          { usersShared: { some: { userId: user.id } } },
+        ],
+      },
+      data: {
+        name: title,
+        lastModified: new Date(),
+      },
+    });
+
+    return updatedDocument;
+  } catch (error) {
+    console.error("Error updating document title:", error);
+    throw new Error("Failed to update document title.");
   }
 }

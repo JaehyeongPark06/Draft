@@ -16,7 +16,7 @@ model User {
   picture        String?
   sessions       Session[]
   documents      Document[]
-  UsersShared    UsersShared[]
+  usersShared    UsersShared[]
 }
 
 model Session {
@@ -29,15 +29,15 @@ model Session {
 }
 
 model Document {
-  id           String        @id @default(cuid())
-  name         String
-  content      Json
-  shared       Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  lastModified DateTime      @updatedAt
-  userId       String
-  owner        User          @relation(fields: [userId], references: [id])
-  usersShared  UsersShared[]
+  id            String        @id @default(cuid())
+  name          String
+  shared        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  lastModified  DateTime      @updatedAt
+  userId        String
+  owner         User          @relation(fields: [userId], references: [id])
+  usersShared   UsersShared[]
+  uploadedFiles String[]
 
   @@index([userId])
 }

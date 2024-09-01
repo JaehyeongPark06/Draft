@@ -23,6 +23,7 @@ interface Document {
   ownedBy: string;
   isOwner: boolean;
 }
+
 export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,7 +73,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error fetching documents:", err);
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred."
       );
     } finally {
       setIsLoading(false);
@@ -116,9 +117,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error removing document:", err);
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to remove document. Please try again later."
+        err instanceof Error ? err.message : "Failed to remove document."
       );
     }
   };
@@ -152,9 +151,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error renaming document:", err);
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to rename document. Please try again later."
+        err instanceof Error ? err.message : "Failed to rename document."
       );
     }
   };
@@ -167,31 +164,19 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error sharing document:", err);
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to share document. Please try again later."
+        err instanceof Error ? err.message : "Failed to share document."
       );
     }
   };
 
   const handleCreateDocument = async () => {
     try {
-      const newDocument = {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "" }],
-          },
-        ],
-      };
-
-      await createDocument("Untitled Document", JSON.stringify(newDocument));
+      await createDocument("Untitled Document");
       refreshDocuments();
       toast.success("Document created successfully.");
     } catch (error) {
       console.error("Failed to create document:", error);
-      toast.error("Failed to create document. Please try again.");
+      toast.error("Failed to create document.");
     }
   };
 

@@ -4,7 +4,7 @@ import {
   SharedPlaceholder,
 } from "./Placeholders";
 
-import Document from "../document";
+import DocumentCard from "../document";
 import { LoaderCircle } from "lucide-react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -45,6 +45,7 @@ export default function Documents({
     setIsCreating(true);
     await onCreate();
     setIsCreating(false);
+    refreshDocuments();
   }
 
   if (documents.length === 0) {
@@ -72,7 +73,7 @@ export default function Documents({
         </div>
       )}
       {documents.map((document) => (
-        <Document
+        <DocumentCard
           key={document.id}
           id={document.id}
           name={document.name}

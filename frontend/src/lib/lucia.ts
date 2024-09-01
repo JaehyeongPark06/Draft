@@ -57,6 +57,7 @@ export const getUser = async () => {
       name: true,
       email: true,
       picture: true,
+      documents: true,
     },
   });
 

@@ -32,6 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ import { LoaderCircle } from "lucide-react";
 import { Users } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -48,7 +49,6 @@ const shareSchema = z.object({
 });
 
 const renameSchema = z.object({
-  // no whitespace in beginning
   name: z
     .string()
     .trim()
@@ -61,7 +61,7 @@ const renameSchema = z.object({
 type ShareFormValues = z.infer<typeof shareSchema>;
 type RenameFormValues = z.infer<typeof renameSchema>;
 
-interface DocumentProps {
+interface DocumentCardProps {
   id: string;
   name: string;
   shared: boolean;
@@ -73,7 +73,7 @@ interface DocumentProps {
   shareDocument: (id: string, email: string) => Promise<void>;
 }
 
-export default function Document({
+export default function DocumentCard({
   id,
   name,
   shared,
@@ -83,10 +83,12 @@ export default function Document({
   removeDocument,
   renameDocument,
   shareDocument,
-}: DocumentProps) {
+}: DocumentCardProps) {
+  const router = useRouter();
   const [isRenaming, setIsRenaming] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
 
   const shareForm = useForm<ShareFormValues>({
     resolver: zodResolver(shareSchema),
@@ -101,6 +103,19 @@ export default function Document({
       name: name,
     },
   });
+
+  const formatDate = (dateString: string) => {
+    const [year, month, day] = dateString.split("-");
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+
+    return date.toLocaleDateString("en-US", options);
+  };
 
   function trimName(name: string) {
     if (name.length > 20) {
@@ -125,6 +140,7 @@ export default function Document({
       renameForm.reset({ name: values.name });
     } finally {
       setIsRenaming(false);
+      setIsRenameDialogOpen(false);
     }
   }
 
@@ -138,17 +154,20 @@ export default function Document({
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+  const handleRenameDialogOpenChange = (open: boolean) => {
+    setIsRenameDialogOpen(open);
+    if (!open) {
+      renameForm.reset({ name: name });
+    }
   };
 
   return (
-    <div className="rounded-md p-4 flex flex-row gap-2 justify-between border border-dashed hover:bg-accent transition-all select-none cursor-pointer">
+    <div
+      className="rounded-md p-4 flex flex-row gap-2 justify-between border border-dashed hover:bg-accent transition-all select-none cursor-pointer"
+      onClick={() => {
+        router.push(`/document/${id}`);
+      }}
+    >
       <div className="flex flex-col gap-1">
         <h4 className="text-base font-medium flex flex-row items-center gap-2">
           {trimName(name)} {shared && <Users className="w-4 h-4" />}
@@ -161,12 +180,26 @@ export default function Document({
         </p>
       </div>
       <Popover>
-        <PopoverTrigger asChild className="cursor-pointer">
+        <PopoverTrigger
+          asChild
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <EllipsisVertical className="w-5 h-5" />
         </PopoverTrigger>
-        <PopoverContent className="w-52">
+        <PopoverContent
+          className="w-52"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <div className="flex flex-col gap-3">
-            <Dialog>
+            <Dialog
+              open={isRenameDialogOpen}
+              onOpenChange={handleRenameDialogOpenChange}
+            >
               <DialogTrigger asChild>
                 <Button variant="default" size="sm">
                   {isRenaming ? (
