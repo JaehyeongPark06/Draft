@@ -96,7 +96,7 @@ function BlockNote({ doc, provider, documentId, initialTitle }: EditorProps) {
       <BlockNoteView
         editor={editor}
         theme={editorTheme}
-        className="w-full h-full"
+        className="w-full h-full mb-24"
       />
     </section>
   );

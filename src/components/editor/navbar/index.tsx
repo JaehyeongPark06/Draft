@@ -21,11 +21,11 @@ export default async function NavBar({ documentId }: NavBarProps) {
   const isOwner = document.owner.id === user.id;
 
   return (
-    <nav className="flex flex-row items-center justify-between gap-4 py-4">
+    <nav className="flex flex-row items-center justify-between gap-4 py-[22px]">
       <Link href="/dashboard">
         <Image src="/logo.webp" alt="Logo" width={32} height={32} />
       </Link>
-      <div className="flex flex-row gap-4 justify-center items-center">
+      <div className="flex flex-row gap-x-4 justify-center items-center">
         <SharedUsers />
         <ShareButton documentId={documentId} isOwner={isOwner} />
         <UserNav user={user} />

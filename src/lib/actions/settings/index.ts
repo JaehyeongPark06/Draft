@@ -1,6 +1,6 @@
 "use server";
 
-import { deleteFile } from "@/lib/uploadthing";
+import { deleteFile } from "@/lib/utDelete";
 import { getUser } from "@/lib/lucia";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";

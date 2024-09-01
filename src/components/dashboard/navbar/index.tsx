@@ -10,7 +10,7 @@ export default async function NavBar() {
     return null;
   }
   return (
-    <nav className="flex flex-row items-center justify-between gap-4 py-4">
+    <nav className="flex flex-row items-center justify-between gap-4 py-6">
       <Link href="/dashboard">
         <Image src="/logo.webp" alt="Logo" width={32} height={32} />
       </Link>

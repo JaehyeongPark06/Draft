@@ -56,7 +56,6 @@ export default function ShareButton({ documentId, isOwner }: ShareButtonProps) {
   });
 
   const handleShareDocument = async (values: ShareFormValues) => {
-    if (!isOwner) return;
     setIsSharing(true);
 
     try {
@@ -75,8 +74,6 @@ export default function ShareButton({ documentId, isOwner }: ShareButtonProps) {
   };
 
   const handleRemoveSharedUser = async (email: string) => {
-    if (!isOwner) return; // prevent removing if not owner
-
     try {
       const updatedSharedUsers = await removeSharedUser(documentId, email);
       setSharedEmails(updatedSharedUsers);
