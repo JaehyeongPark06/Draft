@@ -35,7 +35,7 @@ Install the dependencies
 npm install
 ```
 
-Fill in the environment variables in `.env`. There is an example file provided in `.env.example`. You will need to make an account on [UploadThing](https://uploadthing.com/), [Liveblocks](https://liveblocks.io/) and [Google Cloud Platform](https://cloud.google.com/) (your google account will work) to get API keys. As for the databse URLs, you can host it locally, or you can do what I did and host on [Supabase](https://supabase.com/).
+Fill in the environment variables in `.env`. There is an example file provided in `.env.example`. You will need to make an account on [UploadThing](https://uploadthing.com/), [Liveblocks](https://liveblocks.io/) and [Google Cloud Platform](https://cloud.google.com/) (your google account will work) to get API keys. As for the database URLs, you can host it locally, or you can do what I did and host on [Supabase](https://supabase.com/).
 
 Run in development mode
 
