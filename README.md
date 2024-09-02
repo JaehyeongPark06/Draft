@@ -18,7 +18,7 @@ A real time collaborative document editor with audio, image, video uploads/embed
 
 ### Backend
 
-- [PostgreSQL, Supabase](https://supabase.com/)
+- [PostgreSQL (Supabase)](https://supabase.com/)
 - [UploadThing (AWS S3 wrapper)](https://uploadthing.com/)
 - [Prisma](https://www.prisma.io/)
 
