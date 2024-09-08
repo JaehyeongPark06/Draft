@@ -4,7 +4,7 @@ https://github.com/user-attachments/assets/e3973d9a-5679-4d7d-adc8-2c2ea1432584
 
 ## About
 
-A real time collaborative document editor with audio, image, video uploads/embeds, emoji support and other rich text features.
+A real-time collaborative document editor with support for multimedia uploads, emojis, and rich text formatting.
 
 ## Libraries and Tools Used
 
