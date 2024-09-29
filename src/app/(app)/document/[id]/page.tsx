@@ -1,3 +1,5 @@
+"use server";
+
 import { Loading } from "@/components/editor/loading";
 import NavBar from "@/components/editor/navbar";
 import { Room } from "@/components/editor/live/Room";

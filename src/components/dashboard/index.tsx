@@ -3,7 +3,6 @@
 import {
   createDocument,
   deleteDocument,
-  getDocuments,
   renameDocument,
   shareDocument,
 } from "@/lib/actions/documents";
@@ -47,7 +46,12 @@ export default function Dashboard() {
     setError(null);
 
     try {
-      const result = await getDocuments(ownerFilter);
+      const response = await fetch(`/api/documents/`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch documents.");
+      }
+
+      const result = await response.json();
       const transformedDocuments: Document[] = result.documents.map(
         (doc: any) => ({
           id: doc.id,
@@ -78,7 +82,7 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [ownerFilter]);
+  }, []);
 
   useEffect(() => {
     refreshDocuments();

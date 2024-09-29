@@ -74,53 +74,6 @@ export async function deleteDocument(id: string) {
   }
 }
 
-export async function getDocuments(filter: "me" | "not-me" | "anyone" = "me") {
-  const user = await getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized.");
-  }
-
-  try {
-    let documents;
-
-    switch (filter) {
-      case "me":
-        documents = await prisma.document.findMany({
-          where: { userId: user.id },
-          include: { owner: { select: { email: true } } },
-        });
-        break;
-      case "not-me":
-        documents = await prisma.document.findMany({
-          where: { usersShared: { some: { userId: user.id } } },
-          include: { owner: { select: { email: true } } },
-        });
-        break;
-      case "anyone":
-        documents = await prisma.document.findMany({
-          where: {
-            OR: [
-              { userId: user.id },
-              { usersShared: { some: { userId: user.id } } },
-            ],
-          },
-          include: { owner: { select: { email: true } } },
-        });
-        break;
-      default:
-        throw new Error("Invalid filter.");
-    }
-
-    return { currentUserEmail: user.email, documents };
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error("Failed to fetch documents.");
-  }
-}
-
 export async function renameDocument(id: string, name: string) {
   const user = await getUser();
 
@@ -309,32 +262,6 @@ export async function removeSharedUser(documentId: string, email: string) {
   }
 }
 
-export async function getDocumentCount() {
-  const user = await getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized.");
-  }
-
-  try {
-    const count = await prisma.document.count({
-      where: {
-        userId: user.id,
-      },
-    });
-
-    return {
-      count,
-      message: count === 0 ? "No documents found." : "Documents found.",
-    };
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error("Failed to fetch document count.");
-  }
-}
-
 export async function clearAllDocuments() {
   const user = await getUser();
 
@@ -442,20 +369,6 @@ export async function getDocumentInfo(id: string) {
     console.error("Error fetching document:", error);
     throw new Error("Failed to fetch document.");
   }
-}
-
-export async function getUserInfo() {
-  const user = await getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized.");
-  }
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  };
 }
 
 export async function updateDocumentTitle(id: string, title: string) {
