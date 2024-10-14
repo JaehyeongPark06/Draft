@@ -21,18 +21,32 @@ export default async function DocumentEditorPage({
   }
 
   const documentId = params.id;
-  const document = await getDocumentInfo(documentId);
+  try {
+    const document = await getDocumentInfo(documentId);
 
-  // if document not shared and user not owner
-  if (document.owner.id !== user.id && !document.shared) {
-    return notFound();
-  }
+    if (!document) {
+      notFound();
+    }
 
-  // if not shared with the user, find user id
-  if (
-    document.usersShared.some((sharedUser) => sharedUser.User.id === user.id)
-  ) {
-    return notFound();
+    // if document not shared and user not owner
+    if (document.owner.id !== user.id && !document.shared) {
+      notFound();
+    }
+
+    // if not shared with the user, find user id
+    if (
+      document.usersShared.find((userShared) => userShared.userId === user.id)
+    ) {
+      notFound();
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Failed to fetch document."
+    ) {
+      notFound();
+    }
+    throw error;
   }
 
   const CollaborativeEditor = dynamic(
@@ -49,7 +63,7 @@ export default async function DocumentEditorPage({
         <NavBar documentId={documentId} />
         <CollaborativeEditor
           documentId={documentId}
-          initialTitle={document.name}
+          initialTitle={document.title}
         />
       </Room>
     </>
