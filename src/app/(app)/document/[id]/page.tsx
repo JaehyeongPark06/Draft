@@ -21,9 +21,9 @@ export default async function DocumentEditorPage({
   }
 
   const documentId = params.id;
-  try {
-    const document = await getDocumentInfo(documentId);
+  const document = await getDocumentInfo(documentId);
 
+  try {
     if (!document) {
       notFound();
     }
@@ -63,7 +63,7 @@ export default async function DocumentEditorPage({
         <NavBar documentId={documentId} />
         <CollaborativeEditor
           documentId={documentId}
-          initialTitle={document.title}
+          initialTitle={document.name}
         />
       </Room>
     </>
